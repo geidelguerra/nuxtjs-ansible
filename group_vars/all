@@ -1,0 +1,21 @@
+# Nodejs
+nodejs_version: 12
+
+# HTTP
+http_domain: example.com
+
+# SSL Certificate
+ssl_certificate: "/etc/letsencrypt/live/{{ http_domain }}/fullchain.pem"
+ssl_certificate_key: "/etc/letsencrypt/live/{{ http_domain }}/privkey.pem"
+ssl_email_address: admin@example.com
+
+# Dir
+working_dir: "/srv/{{ http_domain }}"
+
+# Git
+git_repo:
+git_version:
+git_key_file:
+
+# System
+system_user: root

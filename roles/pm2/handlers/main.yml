@@ -1,0 +1,4 @@
+---
+# roles/pm2/handlers/main.yml
+- name: Reload PM2
+  command: "pm2 reload {{ http_domain }}"

@@ -1,0 +1,70 @@
+---
+# roles/app/tasks/main.yml
+- name: Checkout from git repository
+  git:
+    accept_hostkey: true
+    repo: "{{ git_repo }}"
+    dest: "{{ working_dir }}"
+    clone: true
+    version: "{{ git_version }}"
+  register: git_task
+
+- name: Set working dir owner
+  file:
+    path: "{{ working_dir }}"
+    owner: "{{ system_user }}"
+    group: "{{ system_user }}"
+    recurse: yes
+
+- name: Install nodejs dependencies
+  npm:
+    path: "{{ working_dir }}"
+  become: no
+  when: git_task.changed
+
+  # when: git_task.changed
+- name: Copy env file
+  template:
+    src: env.j2
+    dest: "{{ working_dir }}/.env"
+  become: no
+  register: env_file_task
+
+- name: Build app
+  command: npm run build
+  args:
+    chdir: "{{ working_dir }}"
+  become: no
+  when: git_task.changed or env_file_task.changed
+
+- name: Delete PM2 process
+  command: "pm2 delete {{ http_domain }}"
+  ignore_errors: yes
+  no_log: yes
+  become: no
+  when: git_task.changed or env_file_task.changed
+
+- name: Start PM2 process
+  command: "pm2 start npm --name {{ http_domain }} -- start"
+  args:
+    chdir: "{{ working_dir }}"
+  become: no
+  when: git_task.changed or env_file_task.changed
+
+- name: Check if certificate already exists
+  stat:
+    path: "{{ ssl_certificate }}"
+  register: certificate_exists_task
+
+- name: Generate certificate
+  shell: "certbot certonly --nginx -n --agree-tos -m {{ ssl_email_address }} -d {{ http_domain }}"
+  when: certificate_exists_task.stat.exists == False
+  notify:
+    - Restart Nginx
+
+- name: Copy Nginx config file
+  template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-enabled/{{ http_domain }}.conf"
+  notify:
+    - Restart Nginx

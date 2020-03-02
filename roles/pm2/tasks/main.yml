@@ -1,0 +1,8 @@
+---
+# roles/pm2/tasks/main.yml
+
+- name: Install PM2
+  npm:
+    name: pm2
+    state: present
+    global: yes

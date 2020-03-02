@@ -1,0 +1,15 @@
+---
+# roles/nodejs/tasks/main.yml
+
+- name: Fetch nodejs setup
+  get_url:
+    url: "https://deb.nodesource.com/setup_{{ nodejs_version }}.x"
+    dest: "/tmp/setup_{{ nodejs_version }}.x"
+  
+- name: Run nodejs setup
+  command: "bash /tmp/setup_{{ nodejs_version }}.x"
+
+- name: Install nodejs
+  apt:
+    name: nodejs
+    state: present
